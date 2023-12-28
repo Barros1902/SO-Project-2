@@ -1,8 +1,20 @@
 #include "api.h"
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int ems_setup(char const* req_pipe_path, char const* resp_pipe_path, char const* server_pipe_path) {
+	int server_pipe_path_, written;
+	if (!(server_pipe_path_ = open(server_pipe_path, O_WRONLY))){
+		return 1;
+	}
+	written = write(server_pipe_path_, "Test", 5);
+	if (written == -1){
+		return 1;
+	}
   //TODO: create pipes and connect to the server
-  return 1;
+  return 0;
 }
 
 int ems_quit(void) { 
