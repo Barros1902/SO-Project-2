@@ -15,8 +15,7 @@ int ems_setup(char const* req_pipe_path, char const* resp_pipe_path, char const*
 	if ((req_pipe = open(req_pipe_path, O_WRONLY)) < 0){
 		exit(1);
 	}
-
-	if ((resp_pipe = open(resp_pipe_path, O_RDONLY)) < 0){
+	if ((rq_pipe = open(req_pipe_path, O_WRONLY)) < 0){
 		exit(1);
 	}
 	
@@ -24,10 +23,12 @@ int ems_setup(char const* req_pipe_path, char const* resp_pipe_path, char const*
 	if (!(server_pipe_path_ = open(server_pipe_path, O_WRONLY))){
 		return 1;
 	}
-	written = write(server_pipe_path_, strcat(req_len, strcat(req_pipe_path, resp_pipe_path)), strlen(req_len) + strlen(req_pipe_path) + strlen(resp_pipe_path) + 3);
+
+	written = write(server_pipe_path_, "Test", 5);
 	if (written == -1){
 		return 1;
 	}
+	
   //TODO: create pipes and connect to the server
   return 0;
 }
