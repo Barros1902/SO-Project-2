@@ -22,7 +22,7 @@ int ems_setup(char const* req_pipe_path, char const* resp_pipe_path, char const*
 	if (!(resp_pipe = open(resp_pipe_path, O_RDONLY))){
 		return 1;
 	}
-	
+
 
 	if (!(server_pipe_path_ = open(server_pipe_path, O_WRONLY))){
 		return 1;
@@ -33,8 +33,6 @@ int ems_setup(char const* req_pipe_path, char const* resp_pipe_path, char const*
 	if (written == -1){
 		return 1;
 	}
-  //TODO: create pipes and connect to the server
-  return 0;
 }
 
 int ems_quit(void) { 
