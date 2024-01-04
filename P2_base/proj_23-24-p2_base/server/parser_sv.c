@@ -45,6 +45,7 @@ int get_code(int in_pipe, int out_pipe) {
         read(in_pipe, xs, message_reserve.num_seats * sizeof(size_t));
         read(in_pipe, ys, message_reserve.num_seats * sizeof(size_t));
         result = ems_reserve(message_reserve.event_id, message_reserve.num_seats, xs, ys);
+        result = 20;
         write(out_pipe, &result, sizeof(int));
         continue;
 
@@ -57,6 +58,7 @@ int get_code(int in_pipe, int out_pipe) {
 
         read(in_pipe, &message_show, sizeof(struct message_show));
         result = ems_show_sv(out_pipe, message_show.event_id, &rows, &cols, &seats);
+        result = 18;
         printf("rows - %ld\n cols - %ld\n", rows, cols);
         write(out_pipe, &result, sizeof(int));
         write(out_pipe, &rows, sizeof(size_t));

@@ -83,8 +83,10 @@ int ems_create(unsigned int event_id, size_t num_rows, size_t num_cols) {
     return 1;
   }
   char code = OP_CODE_CREATE;
+  int done = 0;
   write(pipe_structs.req_pipe, &code, sizeof(char));
   write(pipe_structs.req_pipe, mensagem, sizeof(struct message_create));
+  read(pipe_structs.resp_pipe, &done, sizeof(int));
   // send create request to the server (through the request pipe) and wait for the response (through the response
   // pipe)
   return 0;
@@ -106,6 +108,7 @@ int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys)
   write(pipe_structs.req_pipe, xs, num_seats * sizeof(size_t));
   write(pipe_structs.req_pipe, ys, num_seats * sizeof(size_t));
   read(pipe_structs.resp_pipe, &done, sizeof(int));
+  printf("\n%d--result_reserve", done);
 
   // send reserve request to the server (through the request pipe) and wait for the response (through the response
   // pipe)
@@ -127,7 +130,6 @@ int ems_show(int out_fd, unsigned int event_id) {
     return 1;
   }
 
-  fprintf(stderr, "Inside show");
   char code = OP_CODE_SHOW;
   write(pipe_structs.req_pipe, &code, sizeof(char));
   write(pipe_structs.req_pipe, mensagem, sizeof(struct message_show));
@@ -153,16 +155,16 @@ int ems_show(int out_fd, unsigned int event_id) {
       sprintf(seat_string, "%u", seat_value);
 
       // Write string representation of seat_value to out_fd
-      write(2, seat_string, strlen(seat_string));
+      write(out_fd, seat_string, strlen(seat_string));
 
       if (j < cols) {
         char space = ' ';
-        write(2, &space, sizeof(char));
+        write(out_fd, &space, sizeof(char));
       }
     }
 
     char newline = '\n';
-    write(2, &newline, sizeof(char));
+    write(out_fd, &newline, sizeof(char));
   }
 
   // send show request to the server (through the request pipe) and wait for the response (through the response
@@ -208,7 +210,7 @@ int ems_list_events(int out_fd) {
 
   //   current = current->next;
   // }
-  
+
   // TODO: send list request to the server (through the request pipe) and wait for the response (through the response
   // pipe)
   return 1;
