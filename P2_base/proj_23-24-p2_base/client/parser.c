@@ -218,7 +218,7 @@ int parse_wait(int fd, unsigned int *delay, unsigned int *thread_id) {
   }
 }
 
-int parte_start(int in_fd, int out_fd) {
+int parse_start(int in_fd, int out_fd) {
   while (1) {
     unsigned int event_id;
     size_t num_rows, num_columns, num_coords;

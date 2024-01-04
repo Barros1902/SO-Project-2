@@ -39,6 +39,9 @@ int main(int argc, char* argv[]) {
   char read_from[40];
   char write_to[40];
 
+  int* session_id = malloc(sizeof(int));
+  *session_id = 1;  
+
   unlink(argv[1]);
   if (mkfifo(argv[1], 0777) < 0) exit(1);
   fprintf(stderr, "Im server initialized the pipe\n");
@@ -53,10 +56,11 @@ int main(int argc, char* argv[]) {
   fprintf(stderr, "%s\n", write_to);
   int in_pipe = open(read_from, O_RDONLY);
   int out_pipe = open(write_to, O_WRONLY);
-
+  write(out_pipe, session_id, sizeof(int));
+  fprintf(stderr, "mandei o session id\n");
   // TODO: Intialize server, create worker threads
   discard = get_code(in_pipe, out_pipe);
-
+  (void)discard;
 
   // TODO: Close Server
   close(svpipe);

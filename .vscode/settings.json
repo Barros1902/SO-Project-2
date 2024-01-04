@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "parser_sv.h": "c"
-    }
+		"parser_sv.h": "c",
+		"api.h": "c",
+		"parser.h": "c"
+	}
 }

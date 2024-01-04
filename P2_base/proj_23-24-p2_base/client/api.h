@@ -5,7 +5,7 @@
 #include "common/constants.h"
 
 struct pipe_struct {
-  size_t id_session;
+  int id_session;
   int req_pipe;
   int resp_pipe;
   char req_pipe_path[MAX_PIPE_PATH];
@@ -17,24 +17,22 @@ struct message_create {
   unsigned int event_id;
   size_t num_rows;
   size_t num_cols;
-  size_t session_id;
+  int session_id;
 };
 
 struct message_quit {
-  size_t session_id;
+  int session_id;
 
 };
 
 struct message_reserve{
-  size_t session_id;
+  int session_id;
   unsigned int event_id;
   size_t num_seats;
-  size_t* xs;
-  size_t* ys;
 };
 
 struct message_show{
-  size_t session_id;
+  int session_id;
   unsigned int event_id;
 
 };

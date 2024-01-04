@@ -1,5 +1,4 @@
 #include "api.h"
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +8,7 @@
 #include <unistd.h>
 
 static struct pipe_struct pipe_structs;
-size_t my_session_id;
+int my_session_id;
 ssize_t written;
 int ems_setup(char const* req_pipe_path, char const* resp_pipe_path, char const* server_pipe_path) {
   int server_pipe;
@@ -22,7 +21,6 @@ int ems_setup(char const* req_pipe_path, char const* resp_pipe_path, char const*
   if (!(server_pipe = open(server_pipe_path, O_WRONLY))) {
     return 1;
   }
-  printf("%s - req_pipe\n%s - resp_pipe\n", req_pipe_path, resp_pipe_path);
   written = write(server_pipe, req_pipe_path, PIPE_NAME_SIZE);
   if (written == -1) {
     return 1;
@@ -40,11 +38,10 @@ int ems_setup(char const* req_pipe_path, char const* resp_pipe_path, char const*
     return 1;
   }
 
-  if (read(pipe_structs.resp_pipe, &my_session_id, sizeof(size_t)) == -1) {
+  if (read(pipe_structs.resp_pipe, &my_session_id, sizeof(int)) == -1) {
     return 1;
   }
 
-  printf("Didas");
   return 0;
 }
 
@@ -55,7 +52,8 @@ int ems_quit(void) {
   } else {
     return 1;
   }
-  write(pipe_structs.req_pipe, OP_CODE_QUIT, sizeof(char));
+  char code = OP_CODE_QUIT;
+  write(pipe_structs.req_pipe, &code, sizeof(char));
   write(pipe_structs.req_pipe, mensagem, sizeof(struct message_quit));
   close(pipe_structs.req_pipe);
   close(pipe_structs.resp_pipe);
@@ -83,11 +81,12 @@ int ems_create(unsigned int event_id, size_t num_rows, size_t num_cols) {
   } else {
     return 1;
   }
-  write(pipe_structs.req_pipe, OP_CODE_CREATE, sizeof(char));
+  char code = OP_CODE_CREATE;
+  write(pipe_structs.req_pipe, &code, sizeof(char));
   write(pipe_structs.req_pipe, mensagem, sizeof(struct message_create));
   // send create request to the server (through the request pipe) and wait for the response (through the response
   // pipe)
-  return 1;
+  return 0;
 }
 
 int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys) {
@@ -96,17 +95,29 @@ int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys)
     mensagem->session_id = my_session_id;
     mensagem->event_id = event_id;
     mensagem->num_seats = num_seats;
-    mensagem->xs = xs;
-    mensagem->ys = ys;
   } else {
     return 1;
   }
-  write(pipe_structs.req_pipe, OP_CODE_RESERVE, sizeof(char));
+  char code = OP_CODE_RESERVE;
+  int done;
+  write(pipe_structs.req_pipe, &code, sizeof(char));
+  fprintf(stderr, "%u - event id\n %zu - num_seats\n", mensagem->event_id, mensagem->num_seats);
+  for(int i = 0; i < (int)num_seats; i++){
+	fprintf(stderr, "%ld ", xs[i]);
+  }
+  fprintf(stderr, "- xs\n");
+  for(int i = 0; i < (int)num_seats; i++){
+	fprintf(stderr, "%ld ", ys[i]);
+  }
+  fprintf(stderr, "- ys\n");
   write(pipe_structs.req_pipe, mensagem, sizeof(struct message_reserve));
+  write(pipe_structs.req_pipe, xs, num_seats * sizeof(size_t));
+  write(pipe_structs.req_pipe, ys, num_seats * sizeof(size_t));
+  read(pipe_structs.resp_pipe, &done ,sizeof(int));
 
   // send reserve request to the server (through the request pipe) and wait for the response (through the response
   // pipe)
-  return 1;
+  return 0;
 }
 
 int ems_show(int out_fd, unsigned int event_id) {
@@ -124,12 +135,15 @@ int ems_show(int out_fd, unsigned int event_id) {
   } else {
     return 1;
   }
-  write(pipe_structs.req_pipe, OP_CODE_SHOW, sizeof(char));
+  fprintf(stderr, "Inside show");
+  char code = OP_CODE_SHOW;
+  write(pipe_structs.req_pipe, &code, sizeof(char));
   write(pipe_structs.req_pipe, mensagem, sizeof(struct message_show));
   read(pipe_structs.resp_pipe, rows, sizeof(size_t));
   read(pipe_structs.resp_pipe, cols, sizeof(size_t));
   seats = malloc(sizeof(unsigned int) * (*rows) * (*cols));
   read(pipe_structs.resp_pipe, seats, sizeof(*rows * (*cols)));
+  
   for (size_t i = 1; i <= *rows; i++) {
     for (size_t j = 1; j <= *cols; j++) {
       unsigned int seat_value = seats[(*cols * (i - 1)) + (j - 1)];
@@ -152,7 +166,7 @@ int ems_show(int out_fd, unsigned int event_id) {
   }
   // send show request to the server (through the request pipe) and wait for the response (through the response
   // pipe)
-  return 1;
+  return 0;
 }
 
 int ems_list_events(int out_fd) {
