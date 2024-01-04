@@ -173,7 +173,7 @@ int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys)
   return 0;
 }
 
-int ems_show_sv(int out_fd, unsigned int event_id, size_t** rows, size_t** cols, unsigned int** seats) {
+int ems_show_sv(int out_fd, unsigned int event_id, size_t* rows, size_t* cols, unsigned int** seats) {
   if (event_list == NULL) {
     fprintf(stderr, "EMS state must be initialized\n");
     return 1;
@@ -185,12 +185,9 @@ int ems_show_sv(int out_fd, unsigned int event_id, size_t** rows, size_t** cols,
   }
 
   struct Event* event = get_event_with_delay(event_id, event_list->head, event_list->tail);
-
-  *rows = malloc(sizeof(int));
-  *cols = malloc(sizeof(int));
   *seats = malloc(event->rows * event->cols * sizeof(unsigned int));
-  **rows = event->rows;
-  **cols = event->cols;
+  *rows = event->rows;
+  *cols = event->cols;
 
   pthread_rwlock_unlock(&event_list->rwl);
 
@@ -240,7 +237,7 @@ int ems_show_sv(int out_fd, unsigned int event_id, size_t** rows, size_t** cols,
   return 0;
 }
 
-int ems_list_events(int out_fd) {
+int ems_list_events_sv(int out_fd, size_t* num_event, unsigned int* ids) {
   if (event_list == NULL) {
     fprintf(stderr, "EMS state must be initialized\n");
     return 1;
