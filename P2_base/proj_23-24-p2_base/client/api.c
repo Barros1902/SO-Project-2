@@ -103,13 +103,17 @@ int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys)
   }
   char code = OP_CODE_RESERVE;
   int done;
+  ssize_t read_num = 0;
   write(pipe_structs.req_pipe, &code, sizeof(char));
   write(pipe_structs.req_pipe, mensagem, sizeof(struct message_reserve));
   write(pipe_structs.req_pipe, xs, num_seats * sizeof(size_t));
   write(pipe_structs.req_pipe, ys, num_seats * sizeof(size_t));
-  read(pipe_structs.resp_pipe, &done, sizeof(int));
-  printf("\n%d--result_reserve", done);
+  read_num = read(pipe_structs.resp_pipe, &done, sizeof(int));
 
+  if (read_num < 1) {
+    fprintf(stderr, "não funcionou");
+    return 1;
+  }
   // send reserve request to the server (through the request pipe) and wait for the response (through the response
   // pipe)
   return 0;
@@ -121,7 +125,7 @@ int ems_show(int out_fd, unsigned int event_id) {
   size_t rows = 0;
   ssize_t read_num = 0;
   unsigned int* seats;
-  int result;
+  int result = 0;
 
   if (mensagem != NULL) {
     mensagem->session_id = my_session_id;
@@ -173,8 +177,20 @@ int ems_show(int out_fd, unsigned int event_id) {
 }
 
 int ems_list_events(int out_fd) {
-  char code = OP_CODE_RESERVE;
+  char code = OP_CODE_LIST_EVENTS;
+  size_t num_event;
+  int result=0;
+  ssize_t read_num = 0;
+  unsigned int* ids;
+  fprintf(stderr,"ems_list_events");
   write(pipe_structs.req_pipe, &code, sizeof(char));
+  read_num = read(pipe_structs.resp_pipe,&result, sizeof(int));
+  read(pipe_structs.resp_pipe, &num_event,sizeof(size_t));
+  read(pipe_structs.resp_pipe,ids,num_event * sizeof(unsigned int) );
+  fprintf(stderr,"\n%ld----num events\n", num_event);
+
+  // struct ListNode* to = event_list->tail;
+  // struct ListNode* current = event_list->head;
 
   // if (current == NULL) {
   //   char buff[] = "No events\n";
@@ -204,14 +220,16 @@ int ems_list_events(int out_fd) {
   //     return 1;
   //   }
 
+    
   //   if (current == to) {
   //     break;
   //   }
-
+  //   num_event ++;
   //   current = current->next;
   // }
+  
 
   // TODO: send list request to the server (through the request pipe) and wait for the response (through the response
   // pipe)
-  return 1;
+  return 0;
 }

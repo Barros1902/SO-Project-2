@@ -13,7 +13,7 @@ int get_code(int in_pipe, int out_pipe) {
   int result;
   while (1) {
     read(in_pipe, &op_code, 1);
-    fprintf(stderr, "%c\n", op_code);
+    fprintf(stderr, "OP_CODE %c\n", op_code);
     switch (op_code) {
       case OP_CODE_QUIT:
         ;
@@ -34,8 +34,8 @@ int get_code(int in_pipe, int out_pipe) {
         struct message_reserve message_reserve;
         size_t* xs = NULL;
         size_t* ys = NULL;
-        fprintf(stderr, "here");
         read(in_pipe, &message_reserve, sizeof(struct message_reserve));
+        fprintf(stderr, "here %d\n",(int) message_reserve.num_seats);
 
         if (message_reserve.num_seats > 0) {
           xs = malloc(message_reserve.num_seats * sizeof(size_t));
@@ -44,9 +44,10 @@ int get_code(int in_pipe, int out_pipe) {
 
         read(in_pipe, xs, message_reserve.num_seats * sizeof(size_t));
         read(in_pipe, ys, message_reserve.num_seats * sizeof(size_t));
+        
         result = ems_reserve(message_reserve.event_id, message_reserve.num_seats, xs, ys);
-        result = 20;
         write(out_pipe, &result, sizeof(int));
+
         continue;
 
       case OP_CODE_SHOW:
@@ -58,7 +59,6 @@ int get_code(int in_pipe, int out_pipe) {
 
         read(in_pipe, &message_show, sizeof(struct message_show));
         result = ems_show_sv(out_pipe, message_show.event_id, &rows, &cols, &seats);
-        result = 18;
         printf("rows - %ld\n cols - %ld\n", rows, cols);
         write(out_pipe, &result, sizeof(int));
         write(out_pipe, &rows, sizeof(size_t));
@@ -69,12 +69,14 @@ int get_code(int in_pipe, int out_pipe) {
 
       case OP_CODE_LIST_EVENTS:
         ;
-        size_t num_events = 0;
-        unsigned int * ids = NULL;
-
-        result = ems_list_events_sv(out_pipe, &num_events, &ids);
-
-        return CMD_HELP;
+        size_t num_event = 0;
+        unsigned int* ids = NULL;
+        result = ems_list_events_sv(out_pipe, &num_event, &ids);
+        write(out_pipe,&result, sizeof(int));
+        write(out_pipe,&num_event, sizeof(size_t));
+        write(out_pipe,ids, num_event * sizeof(unsigned int));
+        free(ids);
+        continue;
 
       case '#':
 
@@ -84,7 +86,7 @@ int get_code(int in_pipe, int out_pipe) {
         return CMD_EMPTY;
 
       default:
-
+        fprintf(stderr,"read OP_CODE:%c\n",op_code);
         return CMD_INVALID;
     }
   }
