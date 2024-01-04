@@ -21,8 +21,22 @@ struct message_create {
 };
 
 struct message_quit {
-    
-    size_t session_id;
+  size_t session_id;
+
+};
+
+struct message_reserve{
+  size_t session_id;
+  unsigned int event_id;
+  size_t num_seats;
+  size_t* xs;
+  size_t* ys;
+};
+
+struct message_show{
+  size_t session_id;
+  unsigned int event_id;
+
 };
 
 /// Connects to an EMS server.

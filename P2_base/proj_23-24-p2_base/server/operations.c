@@ -185,7 +185,7 @@ int ems_show(int out_fd, unsigned int event_id) {
   }
 
   struct Event* event = get_event_with_delay(event_id, event_list->head, event_list->tail);
-
+  unsigned int *buffer = malloc(event->rows * event->cols * sizeof(unsigned int));
   pthread_rwlock_unlock(&event_list->rwl);
 
   if (event == NULL) {
@@ -200,31 +200,35 @@ int ems_show(int out_fd, unsigned int event_id) {
 
   for (size_t i = 1; i <= event->rows; i++) {
     for (size_t j = 1; j <= event->cols; j++) {
-      char buffer[16];
-      sprintf(buffer, "%u", event->data[seat_index(event, i, j)]);
 
-      if (print_str(out_fd, buffer)) {
-        perror("Error writing to file descriptor");
-        pthread_mutex_unlock(&event->mutex);
-        return 1;
-      }
+      buffer[(i - 1) * event->cols + (j - 1)] = (unsigned int)event->data[seat_index(event, i, j)];
 
-      if (j < event->cols) {
-        if (print_str(out_fd, " ")) {
-          perror("Error writing to file descriptor");
-          pthread_mutex_unlock(&event->mutex);
-          return 1;
-        }
-      }
+      // if (print_str(out_fd, buffer)) {
+      //   perror("Error writing to file descriptor");
+      //   pthread_mutex_unlock(&event->mutex);
+      //   return 1;
+      // }
+
+      // if (j < event->cols) {
+      //   if (print_str(out_fd, " ")) {
+      //     perror("Error writing to file descriptor");
+      //     pthread_mutex_unlock(&event->mutex);
+      //     return 1;
+      //   }
+      // }
     }
 
-    if (print_str(out_fd, "\n")) {
-      perror("Error writing to file descriptor");
-      pthread_mutex_unlock(&event->mutex);
-      return 1;
-    }
+    // if (print_str(out_fd, "\n")) {
+    //   perror("Error writing to file descriptor");
+    //   pthread_mutex_unlock(&event->mutex);
+    //   return 1;
+    // }
   }
-
+  //TODO Erros e seus returns
+  write(out_fd, &event->rows, sizeof(size_t));
+  write(out_fd, &event->cols, sizeof(size_t));
+  write(out_fd, buffer, sizeof(unsigned int*));
+  free(buffer);
   pthread_mutex_unlock(&event->mutex);
   return 0;
 }

@@ -9,6 +9,7 @@
 #include "common/constants.h"
 #include "common/io.h"
 #include "operations.h"
+#include "parser_sv.h"
 
 int main(int argc, char* argv[]) {
   if (argc < 2 || argc > 3) {
@@ -34,7 +35,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   int svpipe;
-
+  int discard;
   char read_from[40];
   char write_to[40];
 
@@ -54,19 +55,8 @@ int main(int argc, char* argv[]) {
   int out_pipe = open(write_to, O_WRONLY);
 
   // TODO: Intialize server, create worker threads
+  discard = get_code(in_pipe, out_pipe);
 
-  while (1) {
-    switch (get_code(in_pipe)) {
-      case /* constant-expression */:
-        /* code */
-        break;
-
-      default:
-        break;
-    }
-    // TODO: Read from pipe
-    // TODO: Write new client to the producer-consumer buffer
-  }
 
   // TODO: Close Server
   close(svpipe);

@@ -9,3 +9,5 @@ enum Command {
   CMD_INVALID,
   EOC  // End of commands
 };
+
+int get_code(int in_pipe, int out_pipe);
