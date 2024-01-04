@@ -1,12 +1,15 @@
 #include "parser.h"
 
+#include <fcntl.h>
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "common/constants.h"
 #include "common/io.h"
+#include "api.h"
 
 static void cleanup(int fd) {
   char ch;
@@ -212,5 +215,86 @@ int parse_wait(int fd, unsigned int *delay, unsigned int *thread_id) {
   } else {
     cleanup(fd);
     return -1;
+  }
+}
+
+int parte_start(int in_fd, int out_fd) {
+  while (1) {
+    unsigned int event_id;
+    size_t num_rows, num_columns, num_coords;
+    unsigned int delay = 0;
+    size_t xs[MAX_RESERVATION_SIZE], ys[MAX_RESERVATION_SIZE];
+
+    switch (get_next(in_fd)) {
+      case CMD_CREATE:
+        if (parse_create(in_fd, &event_id, &num_rows, &num_columns) != 0) {
+          fprintf(stderr, "Invalid command. See HELP for usage\n");
+          continue;
+        }
+
+        if (ems_create(event_id, num_rows, num_columns)) fprintf(stderr, "Failed to create event\n");
+        break;
+
+      case CMD_RESERVE:
+        num_coords = parse_reserve(in_fd, MAX_RESERVATION_SIZE, &event_id, xs, ys);
+
+        if (num_coords == 0) {
+          fprintf(stderr, "Invalid command. See HELP for usage\n");
+          continue;
+        }
+
+        if (ems_reserve(event_id, num_coords, xs, ys)) fprintf(stderr, "Failed to reserve seats\n");
+        break;
+
+      case CMD_SHOW:
+        if (parse_show(in_fd, &event_id) != 0) {
+          fprintf(stderr, "Invalid command. See HELP for usage\n");
+          continue;
+        }
+
+        if (ems_show(out_fd, event_id)) fprintf(stderr, "Failed to show event\n");
+        break;
+
+      case CMD_LIST_EVENTS:
+        if (ems_list_events(out_fd)) fprintf(stderr, "Failed to list events\n");
+        break;
+
+      case CMD_WAIT:
+        if (parse_wait(in_fd, &delay, NULL) == -1) {
+          fprintf(stderr, "Invalid command. See HELP for usage\n");
+          continue;
+        }
+
+        if (delay > 0) {
+          printf("Waiting...\n");
+          sleep(delay);
+        }
+        break;
+
+      case CMD_INVALID:
+        fprintf(stderr, "Invalid command. See HELP for usage\n");
+        break;
+
+      case CMD_HELP:
+        printf(
+            "Available commands:\n"
+            "  CREATE <event_id> <num_rows> <num_columns>\n"
+            "  RESERVE <event_id> [(<x1>,<y1>) (<x2>,<y2>) ...]\n"
+            "  SHOW <event_id>\n"
+            "  LIST\n"
+            "  WAIT <delay_ms>\n"
+            "  HELP\n");
+
+        break;
+
+      case CMD_EMPTY:
+        break;
+
+      case EOC:
+        close(in_fd);
+        close(out_fd);
+        ems_quit();
+        return 0;
+    }
   }
 }

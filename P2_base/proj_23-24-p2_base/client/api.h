@@ -2,6 +2,28 @@
 #define CLIENT_API_H
 
 #include <stddef.h>
+#include "common/constants.h"
+
+struct pipe_struct {
+  size_t id_session;
+  int req_pipe;
+  int resp_pipe;
+  char req_pipe_path[MAX_PIPE_PATH];
+  char resp_pipe_path[MAX_PIPE_PATH];
+};
+
+struct message_create {
+  
+  unsigned int event_id;
+  size_t num_rows;
+  size_t num_cols;
+  size_t session_id;
+};
+
+struct message_quit {
+    
+    size_t session_id;
+};
 
 /// Connects to an EMS server.
 /// @param req_pipe_path Path to the name pipe to be created for requests.
