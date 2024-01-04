@@ -179,55 +179,32 @@ int ems_show(int out_fd, unsigned int event_id) {
 int ems_list_events(int out_fd) {
   char code = OP_CODE_LIST_EVENTS;
   size_t num_event;
-  int result=0;
+  int result = 0;
   ssize_t read_num = 0;
   unsigned int* ids;
-  fprintf(stderr,"ems_list_events");
+
+  fprintf(stderr, "ems_list_events\n");
   write(pipe_structs.req_pipe, &code, sizeof(char));
-  read_num = read(pipe_structs.resp_pipe,&result, sizeof(int));
-  read(pipe_structs.resp_pipe, &num_event,sizeof(size_t));
-  read(pipe_structs.resp_pipe,ids,num_event * sizeof(unsigned int) );
-  fprintf(stderr,"\n%ld----num events\n", num_event);
+  read_num = read(pipe_structs.resp_pipe, &result, sizeof(int));
+  read(pipe_structs.resp_pipe, &num_event, sizeof(size_t));
+  ids = malloc(num_event * sizeof(unsigned int) + 1);
+  read(pipe_structs.resp_pipe, ids, num_event * sizeof(unsigned int));
 
-  // struct ListNode* to = event_list->tail;
-  // struct ListNode* current = event_list->head;
+  fprintf(stderr, "num_events_TOTAL:%ld\n", num_event);
 
-  // if (current == NULL) {
-  //   char buff[] = "No events\n";
-  //   if (print_str(out_fd, buff)) {
-  //     perror("Error writing to file descriptor");
-  //     pthread_rwlock_unlock(&event_list->rwl);
-  //     return 1;
-  //   }
+  free(ids);
 
-  //   pthread_rwlock_unlock(&event_list->rwl);
-  //   return 0;
-  // }
-
-  // while (1) {
-  //   char buff[] = "Event: ";
-  //   if (print_str(out_fd, buff)) {
-  //     perror("Error writing to file descriptor");
-  //     pthread_rwlock_unlock(&event_list->rwl);
-  //     return 1;
-  //   }
-
-  //   char id[16];
-  //   sprintf(id, "%u\n", (current->event)->id);
-  //   if (print_str(out_fd, id)) {
-  //     perror("Error writing to file descriptor");
-  //     pthread_rwlock_unlock(&event_list->rwl);
-  //     return 1;
-  //   }
-
-    
-  //   if (current == to) {
-  //     break;
-  //   }
-  //   num_event ++;
-  //   current = current->next;
-  // }
-  
+  for (size_t i = 0; i < num_event; ++i) {
+    char event_str[16];  // Assuming 16 is enough for the event ID string representation
+    sprintf(event_str, "Event: %u\n", ids[i ] +1);
+    if (write(out_fd, event_str, strlen(event_str)) == -1) {
+      perror("Error writing to file descriptor");
+      free(ids);
+      return 1;
+    }
+    char newline = '\n';
+    write(out_fd, &newline, sizeof(char));
+  }
 
   // TODO: send list request to the server (through the request pipe) and wait for the response (through the response
   // pipe)

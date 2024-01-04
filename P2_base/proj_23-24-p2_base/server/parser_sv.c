@@ -72,9 +72,11 @@ int get_code(int in_pipe, int out_pipe) {
         size_t num_event = 0;
         unsigned int* ids = NULL;
         result = ems_list_events_sv(out_pipe, &num_event, &ids);
+  
         write(out_pipe,&result, sizeof(int));
         write(out_pipe,&num_event, sizeof(size_t));
         write(out_pipe,ids, num_event * sizeof(unsigned int));
+        
         free(ids);
         continue;
 

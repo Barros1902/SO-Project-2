@@ -227,7 +227,6 @@ int ems_list_events_sv(int out_fd, size_t* num_event, unsigned int** ids) {
 
   struct ListNode* to = event_list->tail;
   struct ListNode* current = event_list->head;
-  *ids = malloc(*num_event * sizeof(unsigned int));
 
   if (current == NULL) {
     char buff[] = "No events\n";
@@ -240,7 +239,6 @@ int ems_list_events_sv(int out_fd, size_t* num_event, unsigned int** ids) {
     pthread_rwlock_unlock(&event_list->rwl);
     return 0;
   }
-
 
   while (1) {
     char buff[] = "Event: ";
@@ -258,7 +256,8 @@ int ems_list_events_sv(int out_fd, size_t* num_event, unsigned int** ids) {
       return 1;
     }
 
-    *num_event ++;
+    *num_event=(*num_event)+1;
+    fprintf(stderr,"num_event: %ld|%p|%p\n",*num_event,current,current->next);
 
     if (current == to) {
       break;
@@ -267,7 +266,9 @@ int ems_list_events_sv(int out_fd, size_t* num_event, unsigned int** ids) {
     current = current->next;
   }
 
-  for(int i = 0; i < num_event; i++){
+  *ids = malloc(*num_event * sizeof(unsigned int));
+  for(int i = 0; i < *num_event; i++){
+    fprintf(stderr,"id content %d|%p\n",i,&((*ids)[i]));
     (*ids)[i]= (unsigned int)(current->event)->id;
     current = current->next;
   }
