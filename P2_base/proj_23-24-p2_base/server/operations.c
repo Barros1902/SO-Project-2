@@ -173,7 +173,7 @@ int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys)
   return 0;
 }
 
-int ems_show(int out_fd, unsigned int event_id) {
+int ems_show_sv(int out_fd, unsigned int event_id, size_t** rows, size_t** cols, unsigned int** seats) {
   if (event_list == NULL) {
     fprintf(stderr, "EMS state must be initialized\n");
     return 1;
@@ -185,7 +185,13 @@ int ems_show(int out_fd, unsigned int event_id) {
   }
 
   struct Event* event = get_event_with_delay(event_id, event_list->head, event_list->tail);
-  unsigned int *buffer = malloc(event->rows * event->cols * sizeof(unsigned int));
+
+  *rows = malloc(sizeof(int));
+  *cols = malloc(sizeof(int));
+  *seats = malloc(event->rows * event->cols * sizeof(unsigned int));
+  **rows = event->rows;
+  **cols = event->cols;
+
   pthread_rwlock_unlock(&event_list->rwl);
 
   if (event == NULL) {
@@ -200,35 +206,36 @@ int ems_show(int out_fd, unsigned int event_id) {
 
   for (size_t i = 1; i <= event->rows; i++) {
     for (size_t j = 1; j <= event->cols; j++) {
+      size_t index_in_seats = (i - 1) * event->cols + (j - 1);
+      size_t index_in_data = seat_index(event, i, j);
 
-      buffer[(i - 1) * event->cols + (j - 1)] = (unsigned int)event->data[seat_index(event, i, j)];
-
-      // if (print_str(out_fd, buffer)) {
-      //   perror("Error writing to file descriptor");
-      //   pthread_mutex_unlock(&event->mutex);
-      //   return 1;
-      // }
-
-      // if (j < event->cols) {
-      //   if (print_str(out_fd, " ")) {
-      //     perror("Error writing to file descriptor");
-      //     pthread_mutex_unlock(&event->mutex);
-      //     return 1;
-      //   }
-      // }
+      // Assuming seat_index returns a valid index
+      (*seats)[index_in_seats] = (unsigned int)event->data[index_in_data];
     }
-
-    // if (print_str(out_fd, "\n")) {
-    //   perror("Error writing to file descriptor");
-    //   pthread_mutex_unlock(&event->mutex);
-    //   return 1;
-    // }
   }
-  //TODO Erros e seus returns
-  write(out_fd, &event->rows, sizeof(size_t));
-  write(out_fd, &event->cols, sizeof(size_t));
-  write(out_fd, buffer, sizeof(unsigned int*));
-  free(buffer);
+
+  // if (print_str(out_fd, buffer)) {
+  //   perror("Error writing to file descriptor");
+  //   pthread_mutex_unlock(&event->mutex);
+  //   return 1;
+  // }
+
+  // if (j < event->cols) {
+  //   if (print_str(out_fd, " ")) {
+  //     perror("Error writing to file descriptor");
+  //     pthread_mutex_unlock(&event->mutex);
+  //     return 1;
+  //   }
+  // }
+
+  // if (print_str(out_fd, "\n")) {
+  //   perror("Error writing to file descriptor");
+  //   pthread_mutex_unlock(&event->mutex);
+  //   return 1;
+  // }
+
+  printf("rows - %ld\n cols - %ld\n", event->rows, event->cols);
+
   pthread_mutex_unlock(&event->mutex);
   return 0;
 }

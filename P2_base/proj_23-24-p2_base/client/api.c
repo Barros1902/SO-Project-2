@@ -101,15 +101,6 @@ int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys)
   char code = OP_CODE_RESERVE;
   int done;
   write(pipe_structs.req_pipe, &code, sizeof(char));
-  fprintf(stderr, "%u - event id\n %zu - num_seats\n", mensagem->event_id, mensagem->num_seats);
-  for(int i = 0; i < (int)num_seats; i++){
-	fprintf(stderr, "%ld ", xs[i]);
-  }
-  fprintf(stderr, "- xs\n");
-  for(int i = 0; i < (int)num_seats; i++){
-	fprintf(stderr, "%ld ", ys[i]);
-  }
-  fprintf(stderr, "- ys\n");
   write(pipe_structs.req_pipe, mensagem, sizeof(struct message_reserve));
   write(pipe_structs.req_pipe, xs, num_seats * sizeof(size_t));
   write(pipe_structs.req_pipe, ys, num_seats * sizeof(size_t));
@@ -122,12 +113,10 @@ int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys)
 
 int ems_show(int out_fd, unsigned int event_id) {
   struct message_show* mensagem = malloc(sizeof(struct message_show));  // TODO free
-  size_t* cols;
-  size_t* rows;
+  size_t cols;
+  size_t rows;
   unsigned int* seats;
-
-  cols = malloc(sizeof(size_t));
-  rows = malloc(sizeof(size_t));
+  int result;
 
   if (mensagem != NULL) {
     mensagem->session_id = my_session_id;
@@ -139,31 +128,34 @@ int ems_show(int out_fd, unsigned int event_id) {
   char code = OP_CODE_SHOW;
   write(pipe_structs.req_pipe, &code, sizeof(char));
   write(pipe_structs.req_pipe, mensagem, sizeof(struct message_show));
-  read(pipe_structs.resp_pipe, rows, sizeof(size_t));
-  read(pipe_structs.resp_pipe, cols, sizeof(size_t));
-  seats = malloc(sizeof(unsigned int) * (*rows) * (*cols));
-  read(pipe_structs.resp_pipe, seats, sizeof(*rows * (*cols)));
+  read(pipe_structs.resp_pipe, &result, sizeof(int));
+  read(pipe_structs.resp_pipe, &rows, sizeof(size_t));
+  read(pipe_structs.resp_pipe, &cols, sizeof(size_t));
+  seats = malloc(sizeof(unsigned int) * (rows) * (cols));
+  read(pipe_structs.resp_pipe, seats, sizeof(unsigned int) * (rows) * (cols));
   
-  for (size_t i = 1; i <= *rows; i++) {
-    for (size_t j = 1; j <= *cols; j++) {
-      unsigned int seat_value = seats[(*cols * (i - 1)) + (j - 1)];
-
+  fprintf(stderr, "\n%zu - rows\n %zu cols\n",rows, cols);
+  for (size_t i = 1; i <= rows; i++) {
+    for (size_t j = 1; j <= cols; j++) {
+      unsigned int seat_value = seats[(cols * (i - 1)) + (j - 1)];
+	  
       // Convert unsigned int to string
       char seat_string[20];  // Adjust size as per your maximum expected value
       sprintf(seat_string, "%u", seat_value);
 
       // Write string representation of seat_value to out_fd
-      write(out_fd, seat_string, strlen(seat_string));
+      write(2, seat_string, strlen(seat_string));
 
-      if (j < *cols) {
+      if (j < cols) {
         char space = ' ';
-        write(out_fd, &space, sizeof(char));
+        write(2, &space, sizeof(char));
       }
     }
 
     char newline = '\n';
-    write(out_fd, &newline, sizeof(char));
+    write(2, &newline, sizeof(char));
   }
+  
   // send show request to the server (through the request pipe) and wait for the response (through the response
   // pipe)
   return 0;

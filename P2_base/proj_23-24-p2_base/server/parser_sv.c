@@ -6,14 +6,14 @@
 
 #include "client/api.h"
 #include "common/constants.h"
+#include "operations.h"
 
 int get_code(int in_pipe, int out_pipe) {
   char op_code;
   int result;
   while (1) {
-    fprintf(stderr, "Server waiting to read an op_code\n");
     read(in_pipe, &op_code, 1);
-    fprintf(stderr, "%c", op_code);
+    fprintf(stderr, "%c\n", op_code);
     switch (op_code) {
       case OP_CODE_QUIT:
         struct message_quit message_quit;
@@ -41,26 +41,24 @@ int get_code(int in_pipe, int out_pipe) {
 
         read(in_pipe, xs, message_reserve.num_seats * sizeof(size_t));
         read(in_pipe, ys, message_reserve.num_seats * sizeof(size_t));
-        fprintf(stderr, "%u - event id %zu - num_seats", message_reserve.event_id, message_reserve.num_seats);
-        for (int i = 0; i < (int)message_reserve.num_seats; i++) {
-          fprintf(stderr, "%zu ", xs[i]);
-        }
-        fprintf(stderr, "- xs\n");
-        for (int i = 0; i < (int)message_reserve.num_seats; i++) {
-          fprintf(stderr, "%zu ", ys[i]);
-        }
-		fprintf(stderr, "- xs\n");
         result = ems_reserve(message_reserve.event_id, message_reserve.num_seats, xs, ys);
-        fprintf(stderr, "estou no reserve\n");
         write(out_pipe, &result, sizeof(int));
         continue;
 
       case OP_CODE_SHOW:
         struct message_show message_show;
-        read(in_pipe, &message_show, sizeof(struct message_show));
-        result = ems_show(out_pipe, message_show.event_id);
-        write(out_pipe, &result, sizeof(int));
 
+        size_t rows, cols = 0;
+        unsigned int* seats = NULL;
+
+        read(in_pipe, &message_show, sizeof(struct message_show));
+        result = ems_show_sv(out_pipe, message_show.event_id, &rows, &cols, &seats);
+		printf("rows - %ld\n cols - %ld\n", rows, cols);
+        write(out_pipe, &result, sizeof(int));
+        write(out_pipe, &rows, sizeof(size_t));
+        write(out_pipe, &cols, sizeof(size_t));
+        write(out_pipe, seats, (rows )* (cols) * sizeof(unsigned int));
+        free(seats);
         continue;
 
       case OP_CODE_LIST_EVENTS:
