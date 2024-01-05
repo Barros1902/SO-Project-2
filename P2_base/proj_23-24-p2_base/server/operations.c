@@ -229,46 +229,21 @@ int ems_list_events_sv(int out_fd, size_t* num_event, unsigned int** ids) {
   struct ListNode* current = event_list->head;
 
   if (current == NULL) {
-    char buff[] = "No events\n";
-    if (print_str(2, buff)) {
-      perror("Error writing to file descriptor");
-      pthread_rwlock_unlock(&event_list->rwl);
-      return 1;
-    }
-
     pthread_rwlock_unlock(&event_list->rwl);
     return 0;
   }
 
   while (1) {
-    char buff[] = "Event: ";
-    if (print_str(2, buff)) {
-      perror("Error writing to file descriptor");
-      pthread_rwlock_unlock(&event_list->rwl);
-      return 1;
-    }
-
-    char id[16];
-    sprintf(id, "%u\n", (current->event)->id);
-    if (print_str(2, id)) {
-      perror("Error writing to file descriptor");
-      pthread_rwlock_unlock(&event_list->rwl);
-      return 1;
-    }
-
     *num_event=(*num_event)+1;
     fprintf(stderr,"num_event: %ld|%p|%p\n",*num_event,current,current->next);
-
     if (current == to) {
       break;
     }
-    
     current = current->next;
   }
 
-  *ids = malloc(*num_event * sizeof(unsigned int));
-  for(int i = 0; i < *num_event; i++){
-    fprintf(stderr,"id content %d|%p\n",i,&((*ids)[i]));
+  *ids = malloc(*num_event * sizeof(unsigned int)+1) ;
+  for(size_t i = 0; i < *num_event; i++){
     (*ids)[i]= (unsigned int)(current->event)->id;
     current = current->next;
   }
