@@ -5,6 +5,7 @@
 #define MAX_PIPE_PATH 256
 #define MESSAGE_SIZE 1024
 #define PIPE_NAME_SIZE 40
+#define THREADS_AMOUNT 8
 
 #define OP_CODE_SETUP '1'
 #define OP_CODE_QUIT '2'

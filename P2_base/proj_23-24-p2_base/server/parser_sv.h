@@ -1,3 +1,13 @@
+#include "sessions.h"
+#include "client/api.h"
+#include "common/constants.h"
+#include "operations.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+
 enum Command {
   CMD_CREATE,
   CMD_RESERVE,
@@ -10,4 +20,4 @@ enum Command {
   EOC  // End of commands
 };
 
-int get_code(int in_pipe, int out_pipe);
+void* get_code(void* list);

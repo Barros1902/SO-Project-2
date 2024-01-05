@@ -173,7 +173,7 @@ int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys)
   return 0;
 }
 
-int ems_show_sv(int out_fd, unsigned int event_id, size_t* rows, size_t* cols, unsigned int** seats) {
+int ems_show_sv(unsigned int event_id, size_t* rows, size_t* cols, unsigned int** seats) {
   if (event_list == NULL) {
     fprintf(stderr, "EMS state must be initialized\n");
     return 1;
@@ -213,7 +213,7 @@ int ems_show_sv(int out_fd, unsigned int event_id, size_t* rows, size_t* cols, u
   return 0;
 }
 
-int ems_list_events_sv(int out_fd, size_t* num_event, unsigned int** ids) {
+int ems_list_events_sv(size_t* num_event, unsigned int** ids) {
 
   if (event_list == NULL) {
     fprintf(stderr, "EMS state must be initialized\n");
@@ -235,7 +235,7 @@ int ems_list_events_sv(int out_fd, size_t* num_event, unsigned int** ids) {
 
   while (1) {
     *num_event=(*num_event)+1;
-    fprintf(stderr,"num_event: %ld|%p|%p\n",*num_event,current,current->next);
+    //fprintf(stderr,"num_event: %ld|%p|%p\n",*num_event,current,current->next);
     if (current == to) {
       break;
     }
@@ -250,4 +250,47 @@ int ems_list_events_sv(int out_fd, size_t* num_event, unsigned int** ids) {
 
   pthread_rwlock_unlock(&event_list->rwl);
   return 0;
+}
+
+void ems_show_all() {
+    if (event_list == NULL) {
+        fprintf(stderr, "EMS state must be initialized\n");
+        return;
+    }
+
+    if (pthread_rwlock_rdlock(&event_list->rwl) != 0) {
+        fprintf(stderr, "Error locking list rwl\n");
+        return;
+    }
+
+    struct ListNode *to = event_list->tail;
+    struct ListNode *current = event_list->head;
+
+    if (current == NULL) {
+        printf("No events\n");
+        pthread_rwlock_unlock(&event_list->rwl);
+        return;
+    }
+
+    while (1) {
+        printf("Event %u:\n", current->event->id);
+        for (size_t i = 1; i <= current->event->rows; i++) {
+            for (size_t j = 1; j <= current->event->cols; j++) {
+                unsigned int seat = current->event->data[seat_index(current->event, i, j)];
+                printf("%u", seat);
+                if (j < current->event->cols) {
+                    printf(" ");
+                }
+            }
+            printf("\n");
+        }
+
+        if (current == to) {
+            break;
+        }
+
+        current = current->next;
+    }
+
+    pthread_rwlock_unlock(&event_list->rwl);
 }

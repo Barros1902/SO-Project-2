@@ -58,9 +58,9 @@ int ems_setup(char const* req_pipe_path, char const* resp_pipe_path, char const*
   }
 
   if (read(pipe_structs.resp_pipe, &my_session_id, sizeof(int)) == -1) {
+	
     return 1;
   }
-
   return 0;
 }
 
@@ -112,7 +112,6 @@ int ems_create(unsigned int event_id, size_t num_rows, size_t num_cols) {
   char code = OP_CODE_CREATE;
   int done = 0;
   ssize_t read_num = 0;
-
   if (write(pipe_structs.req_pipe, &code, sizeof(char)) == -1) {
     fprintf(stderr, "failed do write op_code to req_pipe");
     free(mensagem);
@@ -124,11 +123,9 @@ int ems_create(unsigned int event_id, size_t num_rows, size_t num_cols) {
     free(mensagem);
     return 1;
   };
-
   read_num = read(pipe_structs.resp_pipe, &done, sizeof(int));
-
   if (read_num < 1) {
-    fprintf(stderr, "read failed");
+    fprintf(stderr, "read failed 1");
     free(mensagem);
     return 1;
   }
@@ -178,7 +175,7 @@ int ems_reserve(unsigned int event_id, size_t num_seats, size_t* xs, size_t* ys)
   read_num = read(pipe_structs.resp_pipe, &done, sizeof(int));
 
   if (read_num < 1) {
-    fprintf(stderr, "read failed");
+    fprintf(stderr, "read failed 2");
     free(mensagem);
     return 1;
   }
@@ -215,11 +212,11 @@ int ems_show(int out_fd, unsigned int event_id) {
     free(mensagem);
     return 1;
   }
-
   read_num = read(pipe_structs.resp_pipe, &result, sizeof(int));
 
+
   if (read_num < 1) {
-    fprintf(stderr, "read failed");
+    fprintf(stderr, "read failed 3");
     free(mensagem);
     return 1;
   }
@@ -243,7 +240,6 @@ int ems_show(int out_fd, unsigned int event_id) {
     return 1;
   };
 
-  fprintf(stderr, "\n%ld - rows\n %ld - cols\n", rows, cols);
   for (size_t i = 1; i <= rows; i++) {
     for (size_t j = 1; j <= cols; j++) {
       unsigned int seat_value = seats[(cols * (i - 1)) + (j - 1)];
@@ -294,7 +290,7 @@ int ems_list_events(int out_fd) {
   read_num = read(pipe_structs.resp_pipe, &result, sizeof(int));
 
   if (read_num < 1) {
-    fprintf(stderr, "read failed");
+    fprintf(stderr, "read failed 4");
     return 1;
   }
 

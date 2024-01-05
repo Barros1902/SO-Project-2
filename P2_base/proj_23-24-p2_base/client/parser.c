@@ -291,9 +291,9 @@ int parse_start(int in_fd, int out_fd) {
         break;
 
       case EOC:
+	  	ems_quit();
         close(in_fd);
         close(out_fd);
-        ems_quit();
         return 0;
     }
   }
